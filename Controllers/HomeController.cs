@@ -1,20 +1,35 @@
 ﻿using MemoryCacheSample.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using System.Diagnostics;
 
-namespace MemoryCacheSample.Controllers
+namespace SampleMemoryCache.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly IMemoryCache _memoryCache;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(IMemoryCache memoryCache)
         {
-            _logger = logger;
+
+            _memoryCache = memoryCache;
         }
 
         public IActionResult Index()
         {
+            if (!_memoryCache.TryGetValue("time", out string timeValue))
+                _memoryCache.Set("time", DateTime.Now.ToString(), new MemoryCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromSeconds(10),
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(30)
+                });
+
+            return View();
+        }
+
+        public IActionResult ShowTime()
+        {
+            ViewBag.Time = _memoryCache.Get<string>("time");
             return View();
         }
 
